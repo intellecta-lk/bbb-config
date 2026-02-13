@@ -52,7 +52,7 @@ clean_installation() {
     # Check if bbb-playback-video is not installed
     if ! dpkg -l | grep -q bbb-playback-video; then
         apt install -y bbb-playback-video
-        #systemctl restart bbb-rap-resque-worker.service
+        systemctl restart bbb-rap-resque-worker.service
     fi
 }
 

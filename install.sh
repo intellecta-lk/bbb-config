@@ -30,6 +30,8 @@ clean_installation() {
 
     echo "The HOST is set to: $HOST"
 
+    sudo apt update && sudo apt upgrade -y
+
     # Check if the file does NOT exist (!)
     if [ ! -f "/etc/bigbluebutton/watermark.txt" ]; then
         echo "Watermark not found. Proceeding with move..."

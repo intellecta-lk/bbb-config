@@ -46,20 +46,22 @@ clean_installation() {
     #systemctl restart bbb-rap-resque-worker.service
     fi
 
-    nginx_hash_bucket_size_increase
 
-    wget -qO- https://raw.githubusercontent.com/bigbluebutton/bbb-install/v3.0.x-release/bbb-install.sh | \
-        bash -s -- -v jammy-300 -s "$HOST" -e dev@intellecta-lk.com
+    # wget -qO- https://raw.githubusercontent.com/bigbluebutton/bbb-install/v3.0.x-release/bbb-install.sh | \
+    #     bash -s -- -v jammy-300 -s "$HOST" -e dev@intellecta-lk.com
 
+    wget  https://raw.githubusercontent.com/bigbluebutton/bbb-install/v3.0.x-release/bbb-install.sh
+    chmod +x bbb-install.sh
+    ./bbb-install.sh -v jammy-300 -s "$HOST" -e dev@intellecta-lk.com 
 }
 
 nginx_hash_bucket_size_increase(){
     CONF_FILE="/etc/nginx/nginx.conf"
     NEW_VALUE="server_names_hash_bucket_size 128;"
 
-    if ! dpkg -l | grep -q nginx; then
-        apt install -y nginx
-    fi
+    # if ! dpkg -l | grep -q nginx; then
+    #     apt install -y nginx
+    # fi
 
     # 1. Check if the setting is already there (even if commented out)
     if grep -q "server_names_hash_bucket_size" "$CONF_FILE"; then
@@ -120,6 +122,7 @@ freeswitch_ip_update() {
 
 if [ "$REPAIR" = "true" ]; then
     echo "Repair mode activated!"
+    # nginx_hash_bucket_size_increase
     freeswitch_ip_update
 else
     clean_installation

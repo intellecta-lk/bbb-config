@@ -1,0 +1,23 @@
+public:
+  app:
+    clientTitle: BigBlueButton
+    
+cameraProfiles:
+  - id: low
+    name: Low quality
+    default: false
+    # bitrate: 100 
+    bitrate: 50 
+  - id: medium
+    name: Medium quality
+    default: true
+    # bitrate: 200
+    bitrate: 100
+  - id: high
+    name: High quality
+    default: false
+    bitrate: 500
+  - id: hd
+    name: High definition
+    default: false
+    bitrate: 800

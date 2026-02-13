@@ -1,0 +1,4 @@
+mediaThresholds:
+  global: 1000
+  perRoom: 300
+  perUser: 0

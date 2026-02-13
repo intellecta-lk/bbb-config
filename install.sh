@@ -20,6 +20,8 @@ while getopts "s:" opt; do
   esac
 done
 
+    DL_DIR=$(pwd)
+
 clean_installation() {
    
     # Check if HOST was actually set
@@ -30,29 +32,28 @@ clean_installation() {
 
     echo "The HOST is set to: $HOST"
 
-    sudo apt update && sudo apt upgrade -y
 
     # Check if the file does NOT exist (!)
     if [ ! -f "/etc/bigbluebutton/watermark.txt" ]; then
         echo "Watermark not found. Proceeding with move..."
-        sudo mv -v ./etc/* /etc/
+        sudo cp -r ./etc/* /etc/
     else
         echo "Skipping: /etc/bigbluebutton/watermark.txt already exists."
-    fi
-
-    # Check if bbb-playback-video is not installed
-    if ! dpkg -l | grep -q bbb-playback-video; then
-    apt install -y bbb-playback-video
-    #systemctl restart bbb-rap-resque-worker.service
     fi
 
 
     # wget -qO- https://raw.githubusercontent.com/bigbluebutton/bbb-install/v3.0.x-release/bbb-install.sh | \
     #     bash -s -- -v jammy-300 -s "$HOST" -e dev@intellecta-lk.com
 
-    wget  https://raw.githubusercontent.com/bigbluebutton/bbb-install/v3.0.x-release/bbb-install.sh
-    chmod +x bbb-install.sh
-    ./bbb-install.sh -v jammy-300 -s "$HOST" -e dev@intellecta-lk.com 
+    wget -P "$DL_DIR"  https://raw.githubusercontent.com/bigbluebutton/bbb-install/v3.0.x-release/bbb-install.sh
+    chmod +x "$DL_DIR/bbb-install.sh"
+    "$DL_DIR/bbb-install.sh" -v jammy-300 -s "$HOST" -e dev@intellecta-lk.com 
+
+    # Check if bbb-playback-video is not installed
+    if ! dpkg -l | grep -q bbb-playback-video; then
+    apt install -y bbb-playback-video
+    #systemctl restart bbb-rap-resque-worker.service
+    fi
 }
 
 nginx_hash_bucket_size_increase(){

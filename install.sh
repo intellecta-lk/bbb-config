@@ -116,7 +116,6 @@ freeswitch_ip_update() {
 
     if [ "$OLD_IP" == "$PUBLIC_IP" ]; then
         echo "IP is already up to date ($PUBLIC_IP). No changes needed."
-        exit 0
     fi
 
     echo "Updating FreeSWITCH IP from $OLD_IP to $PUBLIC_IP..."
@@ -158,7 +157,6 @@ check_domain_length() {
       exit 1
   else
       echo "✅ SUCCESS: Subdomain fits within the bucket size."
-      exit 0
   fi
 }
 
@@ -175,13 +173,13 @@ update_config() {
     # 2. Setup or update the local repository clone
     if [ -d "$TARGET_DIR" ]; then
         echo "Updating existing repository..."
-        cd "$TARGET_DIR" || exit
+        cd "$TARGET_DIR" || exit 1
         git fetch origin
         git reset --hard origin/main
     else
         echo "Cloning repository..."
         git clone "$REPO_URL" "$TARGET_DIR"
-        cd "$TARGET_DIR" || exit
+        cd "$TARGET_DIR" || exit 1
     fi
 
     # 3. Verify the source directory exists before copying

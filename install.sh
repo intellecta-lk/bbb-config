@@ -37,27 +37,14 @@ EMAIL=dev@intellecta-lk.com
 REPO_URL="https://github.com/intellecta-lk/bbb-config"
 
 clean_installation() {
-   
 
     wget -P "$DL_DIR"  https://raw.githubusercontent.com/bigbluebutton/bbb-install/v3.0.x-release/bbb-install.sh
     chmod +x "$DL_DIR/bbb-install.sh"
     # install without ssl by ommiting -e (email) flag, which is required for certbot to work
     "$DL_DIR/bbb-install.sh" -v jammy-300 -s "$HOST" -e "$EMAIL"
 
-    # Check if bbb-playback-video is not installed
-    if ! dpkg -l | grep -q bbb-playback-video; then
-        apt install -y bbb-playback-video
-        # systemctl restart bbb-rap-resque-worker.service
-    fi
     
-    # Update configuration files from the repository
-    update_config
-
     nginx_hash_bucket_size_increase
-
-    # DONT RUN TWICE CURL CACHE SSL ERROR OCCURS 
-    # Install SSL and configure nginx for BigBlueButton
-    # "$DL_DIR/bbb-install.sh" -v jammy-300 -s "$HOST" -e dev@intellecta-lk.com
 
     # Restart BigBlueButton services to apply changes
     bbb-conf --restart
@@ -167,26 +154,20 @@ fetch_latest_change() {
     git reset --hard origin/main
 }
 
-update_config() {
+add_video_playback() {
 
-    # 1. Check for root/sudo privileges (required to write to /etc)
-    if [ "$EUID" -ne 0 ]; then 
-    echo "Please run as root or using sudo."
-    exit 1
+    sudo yq -i '
+    .steps.captions = ["process:presentation", "process:video"] |
+    .steps."process:video" = "publish:video"
+    ' /etc/bigbluebutton/recording/recording.yml
+
+    # Check if bbb-playback-video is not installed
+    if ! dpkg -l | grep -q bbb-playback-video; then
+        apt install -y bbb-playback-video
+        systemctl restart bbb-rap-resque-worker.service
     fi
-
-
-    # 2. Verify the source directory exists before copying
-    # if [ -d "$DL_DIR/etc" ]; then
-    #     echo "Copying configurations to /etc..."
-    #     # -v: verbose, -r: recursive
-    #     cp -vr "$DL_DIR/etc"/* /etc/
-    #     echo "Update complete."
-    # else
-    #     echo "Error: Source directory $DL_DIR/etc not found in repository."
-    #     exit 1
-    # fi
 }
+
 
 
 if [ "$REPAIR" = "true" ]; then
@@ -196,12 +177,9 @@ if [ "$REPAIR" = "true" ]; then
     freeswitch_ip_update
     # Install SSL and configure nginx for BigBlueButton
     "$DL_DIR/bbb-install.sh" -v jammy-300 -s "$HOST" -e "$EMAIL"
-elif [ "$UPDATE_CONFIG" = "true" ]; then
-    echo "Update config mode activated!"
-    fetch_latest_change
-    update_config
 else
     check_host_flag_valid
     check_domain_length
     clean_installation
+    add_video_playback
 fi

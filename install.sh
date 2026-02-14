@@ -177,15 +177,15 @@ update_config() {
 
 
     # 2. Verify the source directory exists before copying
-    if [ -d "$DL_DIR/etc" ]; then
-        echo "Copying configurations to /etc..."
-        # -v: verbose, -r: recursive
-        cp -vr "$DL_DIR/etc"/* /etc/
-        echo "Update complete."
-    else
-        echo "Error: Source directory $DL_DIR/etc not found in repository."
-        exit 1
-    fi
+    # if [ -d "$DL_DIR/etc" ]; then
+    #     echo "Copying configurations to /etc..."
+    #     # -v: verbose, -r: recursive
+    #     cp -vr "$DL_DIR/etc"/* /etc/
+    #     echo "Update complete."
+    # else
+    #     echo "Error: Source directory $DL_DIR/etc not found in repository."
+    #     exit 1
+    # fi
 }
 
 

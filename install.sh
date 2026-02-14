@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 's:' means the script expects a value after the -s flag
-while getopts "s:r:" opt; do
+while getopts "s:r" opt; do
   case $opt in
     s)
       HOST="$OPTARG"
@@ -147,15 +147,17 @@ check_domain_length() {
 
   # 2. Calculate the length of the subdomain
   DOMAIN_LEN=${#HOST}
+  EFFECTIVE_LEN=$((DOMAIN_LEN + 8)) 
 
   echo "---------------------------------------"
   echo "Domain:    $HOST"
   echo "Length:    $DOMAIN_LEN characters"
+  echo "Effective Length:    $EFFECTIVE_LEN [+8 for nginx overhead]"
   echo "Limit:     $BUCKET_SIZE bytes"
   echo "---------------------------------------"
 
   # 3. Compare
-  if [ "$DOMAIN_LEN" -ge "$BUCKET_SIZE" ]; then
+  if [ "$EFFECTIVE_LEN" -ge "$BUCKET_SIZE" ]; then
       echo "❌ ERROR: Subdomain is too long!"
       echo "Increase 'server_names_hash_bucket_size' to the next power of two (e.g., 128) in nginx.conf."
       exit 1
@@ -168,9 +170,11 @@ check_domain_length() {
 
 if [ "$REPAIR" = "true" ]; then
     echo "Repair mode activated!"
+    check_domain_length
     freeswitch_ip_update
     # Install SSL and configure nginx for BigBlueButton
     "$DL_DIR/bbb-install.sh" -v jammy-300 -s "$HOST" -e "$EMAIL"
 else
+    check_domain_length
     clean_installation
 fi

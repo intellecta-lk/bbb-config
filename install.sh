@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 's:' means the script expects a value after the -s flag
-while getopts "s:" opt; do
+while getopts "s:r:" opt; do
   case $opt in
     s)
       HOST="$OPTARG"
@@ -39,7 +39,7 @@ clean_installation() {
     wget -P "$DL_DIR"  https://raw.githubusercontent.com/bigbluebutton/bbb-install/v3.0.x-release/bbb-install.sh
     chmod +x "$DL_DIR/bbb-install.sh"
     # install without ssl by ommiting -e (email) flag, which is required for certbot to work
-    "$DL_DIR/bbb-install.sh" -v jammy-300 -s "$HOST" 
+    "$DL_DIR/bbb-install.sh" -v jammy-300 -s bbb.intellecta.space -e dev@intellecta-lk.com
 
     # Check if bbb-playback-video is not installed
     if ! dpkg -l | grep -q bbb-playback-video; then
@@ -74,7 +74,7 @@ nginx_hash_bucket_size_increase() {
     if grep -q "server_names_hash_bucket_size" "$CONF_FILE"; then
         echo "Updating existing setting..."
         # Replace the existing line (commented or not) with the new value
-        sudo sed -i "s/.*server_names_hash_bucket_size.*/    $NEW_VALUE/" "$CONF_FILE"
+        sudo sed -i "s/.*server_names_hash_bucket_size.*/        $NEW_VALUE/" "$CONF_FILE"
     else
         echo "Adding setting to http block..."
         # Insert it right after the 'http {' line

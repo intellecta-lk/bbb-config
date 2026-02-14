@@ -1,13 +1,16 @@
 #!/bin/bash
 
 # 's:' means the script expects a value after the -s flag
-while getopts "s:r" opt; do
+while getopts "s:ru" opt; do
   case $opt in
     s)
       HOST="$OPTARG"
       ;;
     r)
       REPAIR="true"
+      ;;
+    u)
+      UPDATE_CONFIG="true"
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -20,24 +23,21 @@ while getopts "s:r" opt; do
   esac
 done
 
-# Check if HOST was actually set
-if [ -z "$HOST" ]; then
-    echo "Error: Host is not set. Use -s <hostname>"
-    exit 1
-fi
+check_host_flag_valid() {
+    if [ -z "$HOST" ]; then
+        echo "Error: Host is not set. Use -s <hostname>"
+        exit 1
+    fi
+    echo "The HOST is set to: $HOST"
+}
 
-echo "The HOST is set to: $HOST"
 
 DL_DIR=$(pwd)
 EMAIL=dev@intellecta-lk.com
+REPO_URL="https://github.com/intellecta-lk/bbb-config"
 
 clean_installation() {
    
-   # Override $HOST if not set, but only in clean installation mode, in repair mode we want to make sure the user actually set it  
-   HOST="bbb.intellecta.space"
-
-    # wget -qO- https://raw.githubusercontent.com/bigbluebutton/bbb-install/v3.0.x-release/bbb-install.sh | \
-    #     bash -s -- -v jammy-300 -s "$HOST" -e dev@intellecta-lk.com
 
     wget -P "$DL_DIR"  https://raw.githubusercontent.com/bigbluebutton/bbb-install/v3.0.x-release/bbb-install.sh
     chmod +x "$DL_DIR/bbb-install.sh"
@@ -50,13 +50,8 @@ clean_installation() {
         # systemctl restart bbb-rap-resque-worker.service
     fi
     
-    # Check if the file does NOT exist (!)
-    if [ ! -f "/etc/bigbluebutton/watermark.txt" ]; then
-        echo "Watermark not found. Proceeding with move..."
-        sudo cp -r ./etc/* /etc/
-    else
-        echo "Skipping: /etc/bigbluebutton/watermark.txt already exists."
-    fi
+    # Update configuration files from the repository
+    update_config
 
     nginx_hash_bucket_size_increase
 
@@ -167,14 +162,53 @@ check_domain_length() {
   fi
 }
 
+update_config() {
+    # Configuration
+    TARGET_DIR="$DL_DIR/bbb-config"
+
+    # 1. Check for root/sudo privileges (required to write to /etc)
+    if [ "$EUID" -ne 0 ]; then 
+    echo "Please run as root or using sudo."
+    exit 1
+    fi
+
+    # 2. Setup or update the local repository clone
+    if [ -d "$TARGET_DIR" ]; then
+        echo "Updating existing repository..."
+        cd "$TARGET_DIR" || exit
+        git fetch origin
+        git reset --hard origin/main
+    else
+        echo "Cloning repository..."
+        git clone "$REPO_URL" "$TARGET_DIR"
+        cd "$TARGET_DIR" || exit
+    fi
+
+    # 3. Verify the source directory exists before copying
+    if [ -d "./etc" ]; then
+        echo "Copying configurations to /etc..."
+        # -v: verbose, -r: recursive
+        cp -vr ./etc/* /etc/
+        echo "Update complete."
+    else
+        echo "Error: Source directory ./etc not found in repository."
+        exit 1
+    fi
+}
+
 
 if [ "$REPAIR" = "true" ]; then
     echo "Repair mode activated!"
+    check_host_flag_valid
     check_domain_length
     freeswitch_ip_update
     # Install SSL and configure nginx for BigBlueButton
     "$DL_DIR/bbb-install.sh" -v jammy-300 -s "$HOST" -e "$EMAIL"
+elif [ "$UPDATE_CONFIG" = "true" ]; then
+    echo "Update config mode activated!"
+    update_config
 else
+    check_host_flag_valid
     check_domain_length
     clean_installation
 fi

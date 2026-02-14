@@ -160,9 +160,14 @@ check_domain_length() {
   fi
 }
 
+fetch_latest_change() {
+    # Setup or update the local repository clone
+    echo "Updating existing repository..."
+    git fetch origin
+    git reset --hard origin/main
+}
+
 update_config() {
-    # Configuration
-    TARGET_DIR="$DL_DIR/bbb-config"
 
     # 1. Check for root/sudo privileges (required to write to /etc)
     if [ "$EUID" -ne 0 ]; then 
@@ -170,26 +175,15 @@ update_config() {
     exit 1
     fi
 
-    # 2. Setup or update the local repository clone
-    if [ -d "$TARGET_DIR" ]; then
-        echo "Updating existing repository..."
-        cd "$TARGET_DIR" || exit 1
-        git fetch origin
-        git reset --hard origin/main
-    else
-        echo "Cloning repository..."
-        git clone "$REPO_URL" "$TARGET_DIR"
-        cd "$TARGET_DIR" || exit 1
-    fi
 
-    # 3. Verify the source directory exists before copying
-    if [ -d "./etc" ]; then
+    # 2. Verify the source directory exists before copying
+    if [ -d "$DL_DIR/etc" ]; then
         echo "Copying configurations to /etc..."
         # -v: verbose, -r: recursive
-        cp -vr ./etc/* /etc/
+        cp -vr "$DL_DIR/etc"/* /etc/
         echo "Update complete."
     else
-        echo "Error: Source directory ./etc not found in repository."
+        echo "Error: Source directory $DL_DIR/etc not found in repository."
         exit 1
     fi
 }
@@ -204,6 +198,7 @@ if [ "$REPAIR" = "true" ]; then
     "$DL_DIR/bbb-install.sh" -v jammy-300 -s "$HOST" -e "$EMAIL"
 elif [ "$UPDATE_CONFIG" = "true" ]; then
     echo "Update config mode activated!"
+    fetch_latest_change
     update_config
 else
     check_host_flag_valid

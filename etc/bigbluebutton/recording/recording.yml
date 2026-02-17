@@ -1,8 +1,8 @@
 steps:
-  archive: "sanity"
-  sanity: "captions"
+  archive: 'sanity'
+  sanity: 'captions'
   captions:
-    - process:presentation
-    - process:video
-  process:presentation: publish:presentation
-  process:video: publish:video
+    - 'process:presentation'
+    - 'process:video'
+  'process:presentation': 'publish:presentation'
+  'process:video': 'publish:video'

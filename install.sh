@@ -155,22 +155,32 @@ fetch_latest_change() {
 }
 
 add_video_playback() {
-    mkdir -p /etc/bigbluebutton/recording
-    cat > /etc/bigbluebutton/recording/recording.yml << REC
-    steps:
-    archive: "sanity"
-    sanity: "captions"
-    captions:
-        - process:presentation
-        - process:video
-    process:presentation: publish:presentation
-    process:video: publish:video
-REC
+#     # Provided By Documentation: https://docs.bigbluebutton.org/2.4/install.html#installing-video-playback
+#     mkdir -p /etc/bigbluebutton/recording
+#     cat > /etc/bigbluebutton/recording/recording.yml << REC
+#     steps:
+#     archive: 'sanity'
+#     sanity: 'captions'
+#     captions:
+#         - 'process:presentation'
+#         - 'process:video'
+#     'process:presentation': 'publish:presentation'
+#     'process:video': 'publish:video'
+# REC
+#     if ! dpkg -l | grep -q bbb-playback-video; then
+#     apt install -y bbb-playback-video
+#     systemctl restart bbb-rap-resque-worker.service
+#     fi
 
     if ! dpkg -l | grep -q bbb-playback-video; then
     apt install -y bbb-playback-video
-    systemctl restart bbb-rap-resque-worker.service
     fi
+
+    bbb-record --enable video
+    systemctl restart bbb-rap-resque-worker.service
+    systemctl restart bbb-rap-starter
+    systemctl restart bbb-rap-resque-worker
+    # systemctl reload nginx
 }
 
 

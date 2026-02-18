@@ -23,17 +23,12 @@ while getopts "s:ru" opt; do
   esac
 done
 
-check_host_flag_valid() {
-    if [ -z "$HOST" ]; then
-        echo "Error: Host is not set. Use -s <hostname>"
-        exit 1
-    fi
-    echo "The HOST is set to: $HOST"
-}
+
 
 
 DL_DIR=$(pwd)
 EMAIL=dev@intellecta-lk.com
+LETS_ENCRYPT_OPTIONS=(--webroot --non-interactive)
 REPO_URL="https://github.com/intellecta-lk/bbb-config"
 # For Specific Version, set the BBB_VERSION variable to the desired version (e.g., "jammy-300").
 # BBB_VERSION=jammy-300
@@ -47,11 +42,8 @@ clean_installation() {
     # install without ssl by ommiting -e (email) flag, which is required for certbot to work
     "$DL_DIR/bbb-install.sh" -v $BBB_VERSION -s "$HOST" -e "$EMAIL"
 
-    
-    nginx_hash_bucket_size_increase
-
-    # Restart BigBlueButton services to apply changes
-    bbb-conf --restart
+    # # Restart BigBlueButton services to apply changes
+    # bbb-conf --restart
 }
 
 
@@ -187,18 +179,60 @@ REC
 
 }
 
+install_ssl(){
+    cat <<HERE > /etc/nginx/sites-available/bigbluebutton
+server_tokens off;
+server {
+  listen 80;
+  listen [::]:80;
+  server_name $HOST;
+
+  access_log  /var/log/nginx/bigbluebutton.access.log;
+
+  # BigBlueButton landing page.
+  location / {
+    root   /var/www/bigbluebutton-default/assets;
+    try_files \$uri @bbb-fe;
+  }
+}
+HERE
+    systemctl restart nginx
+
+    # 
+    if ! certbot --email "$EMAIL" --agree-tos --rsa-key-size 4096 -w /var/www/bigbluebutton-default/assets/ \
+           -d "$HOST" --deploy-hook "systemctl reload nginx" "${LETS_ENCRYPT_OPTIONS[@]}" certonly; then
+        systemctl restart nginx
+        err "Let's Encrypt SSL request for $HOST did not succeed - exiting"
+    fi
+}
+
+check_host_flag_valid() {
+    if [ -z "$HOST" ]; then
+        echo "Error: Host is not set. Use -s <hostname>"
+        exit 1
+    fi
+    check_domain_length
+    echo "The HOST is set to: $HOST"
+}
 
 
 if [ "$REPAIR" = "true" ]; then
     echo "Repair mode activated!"
+    # Requirements
     check_host_flag_valid
-    check_domain_length
+
+    # Process
     freeswitch_ip_update
+    install_ssl
     # Install SSL and configure nginx for BigBlueButton
-    "$DL_DIR/bbb-install.sh" -v $BBB_VERSION -s "$HOST" -e "$EMAIL"
+    # "$DL_DIR/bbb-install.sh" -v $BBB_VERSION -s "$HOST" -e "$EMAIL"
 else
+    # Pre-Config
+    nginx_hash_bucket_size_increase
+    # Requirements
     check_host_flag_valid
-    check_domain_length
+
+    # Setup
     clean_installation
     add_video_playback
 fi

@@ -35,13 +35,17 @@ check_host_flag_valid() {
 DL_DIR=$(pwd)
 EMAIL=dev@intellecta-lk.com
 REPO_URL="https://github.com/intellecta-lk/bbb-config"
+# For Specific Version, set the BBB_VERSION variable to the desired version (e.g., "jammy-300").
+# BBB_VERSION=jammy-300
+BBB_VERSION=jammy-300-3.0.22
+
 
 clean_installation() {
 
     wget -P "$DL_DIR"  https://raw.githubusercontent.com/bigbluebutton/bbb-install/v3.0.x-release/bbb-install.sh
     chmod +x "$DL_DIR/bbb-install.sh"
     # install without ssl by ommiting -e (email) flag, which is required for certbot to work
-    "$DL_DIR/bbb-install.sh" -v jammy-300 -s "$HOST" -e "$EMAIL"
+    "$DL_DIR/bbb-install.sh" -v $BBB_VERSION -s "$HOST" -e "$EMAIL"
 
     
     nginx_hash_bucket_size_increase
@@ -156,31 +160,22 @@ fetch_latest_change() {
 
 add_video_playback() {
 #     # Provided By Documentation: https://docs.bigbluebutton.org/2.4/install.html#installing-video-playback
-#     mkdir -p /etc/bigbluebutton/recording
-#     cat > /etc/bigbluebutton/recording/recording.yml << REC
-#     steps:
-#     archive: 'sanity'
-#     sanity: 'captions'
-#     captions:
-#         - 'process:presentation'
-#         - 'process:video'
-#     'process:presentation': 'publish:presentation'
-#     'process:video': 'publish:video'
-# REC
-#     if ! dpkg -l | grep -q bbb-playback-video; then
-#     apt install -y bbb-playback-video
-#     systemctl restart bbb-rap-resque-worker.service
-#     fi
-
+    mkdir -p /etc/bigbluebutton/recording
+    cat > /etc/bigbluebutton/recording/recording.yml << REC
+steps:
+    archive: 'sanity'
+    sanity: 'captions'
+    captions:
+        - 'process:presentation'
+        - 'process:video'
+    'process:presentation': 'publish:presentation'
+    'process:video': 'publish:video'
+REC
     if ! dpkg -l | grep -q bbb-playback-video; then
     apt install -y bbb-playback-video
+    systemctl restart bbb-rap-resque-worker.service
     fi
 
-    bbb-record --enable video
-    systemctl restart bbb-rap-resque-worker.service
-    systemctl restart bbb-rap-starter
-    systemctl restart bbb-rap-resque-worker
-    # systemctl reload nginx
 }
 
 
@@ -191,7 +186,7 @@ if [ "$REPAIR" = "true" ]; then
     check_domain_length
     freeswitch_ip_update
     # Install SSL and configure nginx for BigBlueButton
-    "$DL_DIR/bbb-install.sh" -v jammy-300 -s "$HOST" -e "$EMAIL"
+    "$DL_DIR/bbb-install.sh" -v $BBB_VERSION -s "$HOST" -e "$EMAIL"
 else
     check_host_flag_valid
     check_domain_length

@@ -1,4 +1,5 @@
 #!/bin/bash
+source ./bbb-install.sh
 
 # 's:' means the script expects a value after the -s flag
 while getopts "s:ru" opt; do
@@ -28,7 +29,6 @@ done
 
 DL_DIR=$(pwd)
 EMAIL=dev@intellecta-lk.com
-LETS_ENCRYPT_OPTIONS=(--webroot --non-interactive)
 REPO_URL="https://github.com/intellecta-lk/bbb-config"
 # For Specific Version, set the BBB_VERSION variable to the desired version (e.g., "jammy-300").
 # BBB_VERSION=jammy-300
@@ -180,30 +180,8 @@ REC
 }
 
 install_ssl(){
-    cat <<HERE > /etc/nginx/sites-available/bigbluebutton
-server_tokens off;
-server {
-  listen 80;
-  listen [::]:80;
-  server_name $HOST;
-
-  access_log  /var/log/nginx/bigbluebutton.access.log;
-
-  # BigBlueButton landing page.
-  location / {
-    root   /var/www/bigbluebutton-default/assets;
-    try_files \$uri @bbb-fe;
-  }
-}
-HERE
-    systemctl restart nginx
-
-    # 
-    if ! certbot --email "$EMAIL" --agree-tos --rsa-key-size 4096 -w /var/www/bigbluebutton-default/assets/ \
-           -d "$HOST" --deploy-hook "systemctl reload nginx" "${LETS_ENCRYPT_OPTIONS[@]}" certonly; then
-        systemctl restart nginx
-        err "Let's Encrypt SSL request for $HOST did not succeed - exiting"
-    fi
+  install_ssl
+  install_haproxy
 }
 
 check_host_flag_valid() {

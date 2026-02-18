@@ -218,6 +218,8 @@ check_host_flag_valid() {
 
 if [ "$REPAIR" = "true" ]; then
     echo "Repair mode activated!"
+    # Pre-Config [because install_ssl overwrites server hash bucket size value]
+    nginx_hash_bucket_size_increase
     # Requirements
     check_host_flag_valid
 

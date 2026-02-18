@@ -1,5 +1,5 @@
 #!/bin/bash
-source ./bbb-install.sh
+source ./source_bbb-install.sh
 
 # 's:' means the script expects a value after the -s flag
 while getopts "s:ru" opt; do
@@ -41,6 +41,11 @@ clean_installation() {
     chmod +x "$DL_DIR/bbb-install.sh"
     # install without ssl by ommiting -e (email) flag, which is required for certbot to work
     "$DL_DIR/bbb-install.sh" -v $BBB_VERSION -s "$HOST" -e "$EMAIL"
+
+
+    # make a copy of the original bbb-install.sh with the main function commented out, so that we can source it in other functions without executing the main function
+    sed 's/^main "$@"/# main/' "$DL_DIR/bbb-install.sh" > "$DL_DIR/source_bbb-install.sh"
+    chmod +x "$DL_DIR/source_bbb-install.sh"
 
     # # Restart BigBlueButton services to apply changes
     # bbb-conf --restart
@@ -179,7 +184,8 @@ REC
 
 }
 
-install_ssl(){
+wrapper_install_ssl(){
+  get_IP  
   install_ssl
   install_haproxy
 }
@@ -203,7 +209,7 @@ if [ "$REPAIR" = "true" ]; then
 
     # Process
     freeswitch_ip_update
-    install_ssl
+    wrapper_install_ssl
     # Install SSL and configure nginx for BigBlueButton
     # "$DL_DIR/bbb-install.sh" -v $BBB_VERSION -s "$HOST" -e "$EMAIL"
 else

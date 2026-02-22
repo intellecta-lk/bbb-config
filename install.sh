@@ -185,8 +185,11 @@ REC
 }
 
 wrapper_install_ssl(){
+ # get_IP set up necessary variables for install_ssl, which is designed to be run as a standalone script, and then call install_ssl to set up SSL certificates and configure nginx for BigBlueButton
+ # like INTERNAL_IP, IP  
   get_IP  
   install_ssl
+ # SSL is handled by haproxy   
   install_haproxy
 }
 
@@ -208,8 +211,12 @@ if [ "$REPAIR" = "true" ]; then
     check_host_flag_valid
 
     # Process
-    freeswitch_ip_update
+    # freeswitch_ip_update
     wrapper_install_ssl
+    
+    # Copy post-scripts 
+    cp -r /scripts/post_publish_bunny.rb /usr/local/bigbluebutton/core/scripts/post_publish/
+    
     # Install SSL and configure nginx for BigBlueButton
     # "$DL_DIR/bbb-install.sh" -v $BBB_VERSION -s "$HOST" -e "$EMAIL"
 else

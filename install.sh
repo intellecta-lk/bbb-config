@@ -185,6 +185,19 @@ REC
 }
 
 wrapper_install_ssl(){
+ # because source file main method is not running we must declare it's variables
+  export DEBIAN_FRONTEND=noninteractive
+  PACKAGE_REPOSITORY=ubuntu.bigbluebutton.org
+  LETS_ENCRYPT_OPTIONS=(--webroot --non-interactive)
+  SOURCES_FETCHED=false
+  GL3_DIR=~/greenlight-v3
+  LTI_DIR=~/bbb-lti
+  NGINX_FILES_DEST=/usr/share/bigbluebutton/nginx
+  IMAGE_MAGICK_DIR=/etc/ImageMagick-6
+  OVERWRITE_IMAGE_MAGICK_POLICY=true
+  CR_TMPFILE=$(mktemp /tmp/carriage-return.XXXXXX)
+  printf '\n' > "$CR_TMPFILE"
+
  # get_IP set up necessary variables for install_ssl, which is designed to be run as a standalone script, and then call install_ssl to set up SSL certificates and configure nginx for BigBlueButton
  # like INTERNAL_IP, IP  
   get_IP  
@@ -214,8 +227,7 @@ if [ "$REPAIR" = "true" ]; then
     # freeswitch_ip_update
     wrapper_install_ssl
     
-    # Copy post-scripts 
-    cp -r /scripts/post_publish_bunny.rb /usr/local/bigbluebutton/core/scripts/post_publish/
+
     
     # Install SSL and configure nginx for BigBlueButton
     # "$DL_DIR/bbb-install.sh" -v $BBB_VERSION -s "$HOST" -e "$EMAIL"
@@ -227,5 +239,7 @@ else
 
     # Setup
     clean_installation
+    # Copy post-scripts 
+    cp -r $DL_DIR/scripts/post_publish_bunny.rb /usr/local/bigbluebutton/core/scripts/post_publish/
     add_video_playback
 fi

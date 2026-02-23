@@ -23,6 +23,7 @@ BUNNY_API_KEY = ENV.fetch('BUNNY_STREAM_API_KEY')
 logger = Logger.new("/var/log/bigbluebutton/post_publish.log", 'weekly' )
 logger.level = Logger::INFO
 BigBlueButton.logger = logger
+BigBlueButton.logger.info("Start Uploading To Bunny For Meeting Id #{meeting_id}")
 
 meeting_metadata = BigBlueButton::Events.get_meeting_metadata("/var/bigbluebutton/recording/raw/#{meeting_id}/events.xml")
 
@@ -57,6 +58,7 @@ def notify_callback(status, data, meeting_metadata)
   http.request(request)
 rescue => e
   puts "Callback failed: #{e.message}"
+  BigBlueButton.logger.info( "Callback failed: #{e.message}")
 end
 
 begin
@@ -110,4 +112,5 @@ begin
 rescue => e
   notify_callback('fail', { meeting_id: meeting_id, reason: e.message }, meeting_metadata)
   puts "Process failed: #{e.message}"
+  BigBlueButton.logger.info("Process failed: #{e.message}")
 end

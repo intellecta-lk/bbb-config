@@ -241,5 +241,6 @@ else
     clean_installation
     # Copy post-scripts 
     cp -r $DL_DIR/scripts/post_publish_bunny.rb /usr/local/bigbluebutton/core/scripts/post_publish/
+    chmod +x /usr/local/bigbluebutton/core/scripts/post_publish/post_publish_bunny.rb
     add_video_playback
 fi

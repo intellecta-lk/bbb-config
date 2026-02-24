@@ -243,8 +243,8 @@ else
     # Copy post-scripts 
     cp -r $DL_DIR/scripts/post_publish_bunny.rb /usr/local/bigbluebutton/core/scripts/post_publish/
     # chmod +x /usr/local/bigbluebutton/core/scripts/post_publish/post_publish_bunny.rb
-    sudo chown -hR bigbluebutton:bigbluebutton /var/log/bigbluebutton/
-    sudo systemctl restart bbb-rap-resque-worker.service
+    # sudo chown -hR bigbluebutton:bigbluebutton /var/log/bigbluebutton/
+    # sudo systemctl restart bbb-rap-resque-worker.service
 
     add_video_playback
 fi

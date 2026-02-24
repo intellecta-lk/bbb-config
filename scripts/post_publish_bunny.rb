@@ -25,11 +25,6 @@ require 'json'
 require "optimist"
 require File.expand_path('../../../lib/recordandplayback', __FILE__)
 
-logger = Logger.new("/var/log/bigbluebutton/post_publish.log", 'weekly' )
-logger.level = Logger::INFO
-BigBlueButton.logger = logger
-BigBlueButton.logger.info("Start Uploading To Bunny For Meeting Id #{meeting_id}")
-
 opts = Optimist::options do
   opt :meeting_id, "Meeting id to archive", :type => String
   opt :format, "Playback format name", :type => String
@@ -37,6 +32,11 @@ end
 
 meeting_id = opts[:meeting_id]
 format = opts[:format]
+
+logger = Logger.new("/var/log/bigbluebutton/post_publish.log", 'weekly' )
+logger.level = Logger::INFO
+BigBlueButton.logger = logger
+BigBlueButton.logger.info("Start Uploading To Bunny For Meeting Id #{meeting_id}")
 
 unless format == 'video'
   puts "Skipping Bunny Stream upload: format is '#{format}', not 'video'."

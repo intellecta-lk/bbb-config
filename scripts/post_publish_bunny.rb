@@ -1,8 +1,34 @@
+#!/usr/bin/ruby
+# encoding: UTF-8
+
+#
+# BigBlueButton open source conferencing system - http://www.bigbluebutton.org/
+#
+# Copyright (c) 2012 BigBlueButton Inc. and by respective authors (see below).
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation; either version 3.0 of the License, or (at your option)
+# any later version.
+#
+# BigBlueButton is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Lesser General Public License along
+# with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
+#
+
 require 'net/http'
-require 'uri'
 require 'json'
 require "optimist"
 require File.expand_path('../../../lib/recordandplayback', __FILE__)
+
+logger = Logger.new("/var/log/bigbluebutton/post_publish.log", 'weekly' )
+logger.level = Logger::INFO
+BigBlueButton.logger = logger
+BigBlueButton.logger.info("Start Uploading To Bunny For Meeting Id #{meeting_id}")
 
 opts = Optimist::options do
   opt :meeting_id, "Meeting id to archive", :type => String
@@ -20,10 +46,7 @@ end
 BUNNY_LIBRARY_ID = ENV.fetch('BUNNY_STREAM_LIB_ID')
 BUNNY_API_KEY = ENV.fetch('BUNNY_STREAM_API_KEY')    
 
-logger = Logger.new("/var/log/bigbluebutton/post_publish.log", 'weekly' )
-logger.level = Logger::INFO
-BigBlueButton.logger = logger
-BigBlueButton.logger.info("Start Uploading To Bunny For Meeting Id #{meeting_id}")
+
 
 meeting_metadata = BigBlueButton::Events.get_meeting_metadata("/var/bigbluebutton/recording/raw/#{meeting_id}/events.xml")
 
@@ -68,7 +91,7 @@ begin
   human_size = format_bytes(file_size_bytes)
 
   # STEP 1: Create Video Object
-  uri = URI("https://video.bunnycdn.com/library/#{BUNNY_LIBRARY_ID}/videos")
+  uri = URI.parse("https://video.bunnycdn.com/library/#{BUNNY_LIBRARY_ID}/videos")
   http = Net::HTTP.new(uri.host, uri.port)
   http.use_ssl = true
   
@@ -83,7 +106,7 @@ begin
   end
   
   # STEP 2: Stream Upload
-  upload_uri = URI("#{uri}/#{video_id}")
+  upload_uri = URI.parse("#{uri}/#{video_id}")
   start_time = Time.now
 
   Net::HTTP.start(upload_uri.host, upload_uri.port, use_ssl: true) do |u_http|
